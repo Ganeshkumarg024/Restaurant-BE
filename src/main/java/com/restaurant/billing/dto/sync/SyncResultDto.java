@@ -1,0 +1,16 @@
+package com.restaurant.billing.dto.sync;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SyncResultDto {
+    private UUID entityId;
+    private String status;
+    private Long serverVersion;
+}
