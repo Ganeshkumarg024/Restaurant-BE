@@ -1,4 +1,3 @@
-# docker-compose.yml
 version: '3.8'
 
 services:
@@ -6,47 +5,66 @@ services:
     image: postgres:15-alpine
     container_name: restaurant-postgres
     environment:
-      POSTGRES_DB: restaurant_billing
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: ${DB_NAME:-restaurant_billing}
+      POSTGRES_USER: ${DB_USERNAME:-adsuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-AdS@3421}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - restaurant-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: restaurant-redis
-    ports:
-      - "6379:6379"
-    networks:
-      - restaurant-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-adsuser} -d ${DB_NAME:-restaurant_billing}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   app:
     build: .
     container_name: restaurant-app
     ports:
-      - "8080:8080"
+      - "8881:8881"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurant_billing
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres123
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      JWT_SECRET: ${JWT_SECRET}
-      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
-      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      # 🔹 PostgreSQL Config
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-restaurant_billing}
+      DB_USERNAME: ${DB_USERNAME:-adsuser}
+      DB_PASSWORD: ${DB_PASSWORD:-AdS@3421}
+
+      # 🔹 Spring Boot DB Config (auto binds)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_NAME:-restaurant_billing}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-adsuser}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-AdS@3421}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: false
+
+      # 🔹 HikariCP Configuration (optional but good practice)
+      DB_MAX_POOL_SIZE: 20
+      DB_MIN_IDLE: 5
+      DB_CONNECTION_TIMEOUT: 30000
+      DB_IDLE_TIMEOUT: 600000
+      DB_MAX_LIFETIME: 1800000
+
+      # 🔹 App Config
+      SERVER_PORT: 8881
+      JWT_SECRET: h0n/4BCc6vcZVXeCKZ/Kwo4+9lMCpdyUY3UuXW0HKX4=
+      RAZORPAY_KEY_ID: rzp_test_dummy
+      RAZORPAY_KEY_SECRET: dummy_secret
+      STORAGE_PATH: /app/uploads
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080,http://localhost:43855
+
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
     networks:
       - restaurant-network
     volumes:
       - ./uploads:/app/uploads
+    restart: unless-stopped
 
 networks:
   restaurant-network:
