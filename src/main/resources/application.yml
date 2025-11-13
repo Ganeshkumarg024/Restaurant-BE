@@ -126,7 +126,7 @@ app:
         max-storage-gb: 50
 
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080,http://localhost:38565}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8080,http://localhost:43855}
     allowed-methods: GET,POST,PUT,DELETE,OPTIONS
     allowed-headers: "*"
     allow-credentials: true

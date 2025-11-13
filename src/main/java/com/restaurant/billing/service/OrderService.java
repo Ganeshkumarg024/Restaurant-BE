@@ -4,16 +4,19 @@ import com.restaurant.billing.dto.order.*;
 import com.restaurant.billing.entity.*;
 import com.restaurant.billing.exception.ResourceNotFoundException;
 import com.restaurant.billing.repository.*;
+import lombok.extern.slf4j.Slf4j;
 import com.restaurant.billing.security.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -22,6 +25,7 @@ public class OrderService {
     private final MenuItemRepository menuItemRepository;
     private final RestaurantTableRepository tableRepository;
     private final TenantRepository tenantRepository;
+    private final BillRepository billRepository;
 
     @Transactional
     public OrderDto createOrder(CreateOrderRequest request) {
@@ -42,7 +46,7 @@ public class OrderService {
                 .customerName(request.getCustomerName())
                 .customerPhone(request.getCustomerPhone())
                 .orderType(Order.OrderType.valueOf(request.getOrderType()))
-                .orderStatus(Order.OrderStatus.PENDING)
+                .orderStatus(Order.OrderStatus.COMPLETED)
                 .notes(request.getNotes())
                 .deviceId(request.getDeviceId())
                 .isDeleted(false)
@@ -60,16 +64,22 @@ public class OrderService {
                     .quantity(itemReq.getQuantity())
                     .unitPrice(menuItem.getPrice())
                     .specialInstructions(itemReq.getSpecialInstructions())
-                    .status(OrderItem.ItemStatus.PENDING)
+                    .status(OrderItem.ItemStatus.SERVED)
                     .build();
 
+            // Calculate total price for the item
+            orderItem.calculateTotal();
             order.addItem(orderItem);
         }
 
         // Calculate totals
-        order.calculateTotals(tenant.getTaxRate(), tenant.getServiceChargeRate());
+//        order.calculateTotals(tenant.getTaxRate(), tenant.getServiceChargeRate());
 
         Order saved = orderRepository.save(order);
+
+        // Automatically generate bill for completed orders
+        generateBillForOrder(saved, tenant);
+
         return OrderDto.fromEntity(saved);
     }
 
@@ -100,5 +110,35 @@ public class OrderService {
 
         Order updated = orderRepository.save(order);
         return OrderDto.fromEntity(updated);
+    }
+
+    private void generateBillForOrder(Order order, Tenant tenant) {
+        try {
+            // Check if bill already exists
+            Bill existingBill = billRepository.findByOrderId(order.getId()).orElse(null);
+            if (existingBill != null) {
+                log.info("Bill already exists for order: {}", order.getId());
+                return;
+            }
+
+            Bill bill = Bill.builder()
+                    .tenantId(order.getTenantId())
+                    .order(order)
+                    .subtotal(order.getSubtotal())
+                    .taxAmount(order.getTaxAmount())
+                    .serviceCharge(order.getServiceCharge())
+                    .discountAmount(BigDecimal.ZERO)
+                    .totalAmount(order.getTotalAmount())
+                    .paymentMethod(Bill.PaymentMethod.CASH) // Default payment method
+                    .paymentStatus(Bill.PaymentStatus.PAID)
+                    .build();
+
+            billRepository.save(bill);
+            log.info("Bill generated for order: {}", order.getId());
+
+        } catch (Exception e) {
+            log.error("Failed to generate bill for order: {}", order.getId(), e);
+            // Don't throw exception to avoid breaking order creation
+        }
     }
 }

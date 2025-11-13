@@ -19,4 +19,9 @@ public interface BillRepository extends JpaRepository<Bill, UUID> {
     @Query("SELECT b FROM Bill b WHERE b.tenantId = :tenantId " +
             "AND b.createdAt BETWEEN :startDate AND :endDate")
     List<Bill> findByDateRange(UUID tenantId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT CAST(b.createdAt AS DATE), SUM(b.totalAmount) FROM Bill b " +
+            "WHERE b.tenantId = :tenantId AND b.createdAt BETWEEN :startDate AND :endDate " +
+            "GROUP BY CAST(b.createdAt AS DATE) ORDER BY CAST(b.createdAt AS DATE)")
+    List<Object[]> getDailySales(UUID tenantId, LocalDateTime startDate, LocalDateTime endDate);
 }

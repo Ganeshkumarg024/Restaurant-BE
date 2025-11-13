@@ -125,12 +125,16 @@ public class Order {
     }
 
     public void calculateTotals(BigDecimal taxRate, BigDecimal serviceChargeRate) {
+        // Ensure all items have their totalPrice calculated
+        items.forEach(OrderItem::calculateTotal);
+
         this.subtotal = items.stream()
                 .map(OrderItem::getTotalPrice)
+                .filter(java.util.Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         this.taxAmount = subtotal.multiply(taxRate).divide(BigDecimal.valueOf(100));
         this.serviceCharge = subtotal.multiply(serviceChargeRate).divide(BigDecimal.valueOf(100));
-        this.totalAmount = subtotal.add(taxAmount).add(serviceCharge).subtract(discountAmount);
+        this.totalAmount = subtotal.add(taxAmount).add(serviceCharge).subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO);
     }
 }

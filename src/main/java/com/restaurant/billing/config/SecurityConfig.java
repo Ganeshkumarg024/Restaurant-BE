@@ -37,7 +37,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public API paths
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 // Add JWT filter before UsernamePasswordAuthenticationFilter
