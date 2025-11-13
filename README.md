@@ -6,17 +6,18 @@ A complete **monolithic Spring Boot backend** for a **SaaS Restaurant Billing Sy
 
 ## 📋 Project Overview
 
-✅ Multi-tenant architecture with data isolation  
-✅ Offline-first sync support (for mobile)  
-✅ Google OAuth2 authentication  
-✅ Razorpay payment integration  
-✅ PDF invoice generation  
-✅ QR code generation for tables  
-✅ Dynamic feature management with AOP  
-✅ 7-day trial + PRIME subscription (₹4999/month)  
-✅ Local file storage (cost-effective MVP)  
-✅ Redis caching for performance  
-✅ Production-ready error handling and monitoring  
+✅ Multi-tenant architecture with data isolation
+✅ Offline-first sync support (for mobile)
+✅ Username/Password authentication with REST code
+✅ Razorpay payment integration
+✅ PDF invoice generation
+✅ QR code generation for tables
+✅ Dynamic feature management with AOP
+✅ 7-day trial + PRIME subscription (₹4999/month)
+✅ Local file storage (cost-effective MVP)
+✅ Production-ready error handling and monitoring
+✅ Dashboard APIs for real-time KPIs
+✅ Product-wise and day-wise sales reports
 
 ---
 
@@ -45,8 +46,8 @@ Copy code
 ### **Prerequisites**
 - Java 17+
 - PostgreSQL 15+
-- Redis 7+
 - Gradle 8+
+- Docker & Docker Compose (for containerized deployment)
 
 ---
 
@@ -152,9 +153,24 @@ restaurant-billing-system/
 🔌 API Endpoints
 Authentication
 Method	Endpoint	Description
-POST	/api/auth/google	Google OAuth login
+POST	/api/auth/register	Register new restaurant account
+POST	/api/auth/login	Login with restaurant code, username, password
 POST	/api/auth/refresh	Refresh access token
 GET	/api/auth/me	Get current user info
+POST	/api/auth/users	Create sub-user (admin only)
+
+Dashboard
+Method	Endpoint	Description
+GET	/api/dashboard/stats	Get dashboard KPIs (sales, orders, payments, tables)
+GET	/api/dashboard/today-sales	Get today's sales amount
+GET	/api/dashboard/active-orders	Get active orders count
+GET	/api/dashboard/pending-payments	Get pending payments count
+GET	/api/dashboard/tables-occupied	Get occupied tables count
+
+Reports
+Method	Endpoint	Description
+GET	/api/reports/product-wise	Get product-wise sales report
+GET	/api/reports/day-wise	Get day-wise sales report
 
 Menu Management
 Method	Endpoint	Description
@@ -245,22 +261,62 @@ Copy code
   ]
 }
 🐳 Docker Deployment
-Development
-bash
-Copy code
+
+### **Quick Start with Docker**
+```bash
+# Clone the repository
+git clone <repository-url>
+cd restaurant-billing-system
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start all services
 docker-compose up -d
-Production
-bash
-Copy code
-# Build
+
+# Check logs
+docker-compose logs -f app
+
+# Access the API
+curl http://localhost:8881/api/dashboard/stats
+```
+
+### **Production Deployment**
+```bash
+# Build the application
 docker build -t restaurant-billing:latest .
 
-# Run
+# Run with environment variables
 docker run -d \
-  -p 8080:8080 \
-  --env-file .env \
   --name restaurant-app \
+  -p 8881:8881 \
+  --env-file .env \
+  --restart unless-stopped \
   restaurant-billing:latest
+```
+
+### **Environment Variables (.env)**
+```bash
+# Database Configuration
+DB_USERNAME=adsuser
+DB_PASSWORD=AdS@3421
+
+# JWT Configuration
+JWT_SECRET=h0n/4BCc6vcZVXeCKZ/Kwo4+9lMCpdyUY3UuXW0HKX4=
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+```
+
+### **Services**
+- **PostgreSQL**: Database on port 5432
+- **Spring Boot App**: API server on port 8881
+- **File Storage**: Local volume for uploads
 📊 Database Schema (Key Tables)
 tenants — Restaurant accounts
 
