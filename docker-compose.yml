@@ -28,11 +28,11 @@ services:
       - "8881:8881"
     environment:
       # 🔹 PostgreSQL Config
-      DB_HOST: postgres
+      DB_HOST: dpg-d4at1vvpm1nc739f07sg-a
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-restaurant_billing}
       DB_USERNAME: ${DB_USERNAME:-adsuser}
-      DB_PASSWORD: ${DB_PASSWORD:-AdS@3421}
+      DB_PASSWORD: ${DB_PASSWORD:nDTAdvrdLFQug6NgMaqEbcLFf68kxaYd}
 
       # 🔹 Spring Boot DB Config (auto binds)
       SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_NAME:-restaurant_billing}
