@@ -37,7 +37,7 @@ services:
       # 🔹 Spring Boot DB Config (auto binds)
       SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_NAME:-restaurant_billing}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-adsuser}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-AdS@3421}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-nDTAdvrdLFQug6NgMaqEbcLFf68kxaYd}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: false
